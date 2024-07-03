@@ -138,7 +138,7 @@ def _replace_image(image_url, image_tag, ebook_folder,
         image_tag.decompose()
     except AssertionError:
         raise ValueError(
-            '%s doesn\'t exist or doesn\'t contain a subdirectory images' % ebook_folder)
+            "%s doesn't exist or doesn't contain a subdirectory images" % ebook_folder)
     except TypeError:
         image_tag.decompose()
 
@@ -231,7 +231,7 @@ class Chapter():
         self.content = unformatted_html_unicode_string
 
 
-class ChapterFactory():
+class ChapterFactory:
     """
     用来创建 chapter的类. 可以从 url, 文件 或 文本 三个方式创建 chapter.
 
@@ -263,13 +263,14 @@ class ChapterFactory():
         try:
             request_object = requests.get(
                 url, headers=self.request_headers, allow_redirects=False)
+            decoded_content = request_object.content.decode('utf-8', 'replace')
         except requests.exceptions.SSLError:
             raise ValueError("Url %s doesn't have valid SSL certificate" % url)
         except (requests.exceptions.MissingSchema,
                 requests.exceptions.ConnectionError):
             raise ValueError(
                 "%s is an invalid url or no network connection" % url)
-        unicode_string = request_object.text
+        unicode_string = decoded_content
         return self.create_chapter_from_string(unicode_string, url, title)
 
     def create_chapter_from_file(self, file_name, url=None, title=None):
@@ -285,7 +286,7 @@ class ChapterFactory():
         Returns:
             Chapter: 一个Chapter对象, 其内容是给定html或xhtml文件的内容.
         """
-        with codecs.open(file_name, 'r', encoding='utf-8') as f:
+        with codecs.open(file_name, 'rw+', encoding='utf-8') as f:
             content_string = f.read()
         return self.create_chapter_from_string(content_string, url, title)
 

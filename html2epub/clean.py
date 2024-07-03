@@ -7,7 +7,6 @@ import re
 # Third party modules
 import bs4
 from bs4 import BeautifulSoup
-from bs4.dammit import EntitySubstitution
 
 # Local modules
 from . import constants
@@ -92,14 +91,14 @@ def clean(input_string,
     for node in image_node_list:
         if not node.has_attr('src'):
             node.extract()
-    unformatted_html_unicode_string = root.prettify()
+    unformat_html_unicode_string = root.prettify()
     # fix <br> tags since not handled well by default by bs4
-    unformatted_html_unicode_string = unformatted_html_unicode_string.replace(
+    unformat_html_unicode_string = unformat_html_unicode_string.replace(
         '<br>', '<br/>')
     # remove &nbsp; and replace with space since not handled well by certain e-readers
-    unformatted_html_unicode_string = unformatted_html_unicode_string.replace(
+    unformat_html_unicode_string = unformat_html_unicode_string.replace(
         '&nbsp;', ' ')
-    return unformatted_html_unicode_string
+    return unformat_html_unicode_string
 
 
 def condense(input_string):
