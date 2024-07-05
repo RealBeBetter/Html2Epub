@@ -42,10 +42,10 @@ def get_image_type(url):
         url(str): 图片路径.
 
     returns:
-        str: 图片的类型名{'jpg', 'jpge', 'gif', 'png', None}
+        str: 图片的类型名{'jpg', 'jpeg', 'gif', 'png', None}
 
     raises:
-        IOError: 图片类型不在 {'jpg', 'jpge', 'gif', 'png'} 四个类型之中
+        IOError: 图片类型不在 {'jpg', 'jpeg', 'gif', 'png'} 四个类型之中
     """
 
     for ending in ['jpg', 'jpeg', 'gif' 'png']:
@@ -90,7 +90,8 @@ def save_image(image_url, image_directory, image_name):
     try:
         # urllib.urlretrieve(image_url, full_image_file_name)
         with open(full_image_file_name, 'wb') as f:
-            user_agent = r'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
+            user_agent = (r'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                          r'Chrome/69.0.3497.100 Safari/537.36')
             request_headers = {'User-Agent': user_agent}
             requests_object = requests.get(image_url, headers=request_headers)
             try:
@@ -113,12 +114,12 @@ def _replace_image(image_url, image_tag, ebook_folder,
         image_url (str): image的url.
         image_tag (bs4.element.Tag): bs4中包含image的tag.
         ebook_folder (str): 将外部图片保存到本地的地址. 内部一定要包含一个名为 "images" 的文件夹.
-        image_name (Option[str]): 保存到本地的imgae的文件名(不包含后缀).
+        image_name (Option[str]): 保存到本地的image的文件名(不包含后缀).
 
     Returns:
         str: image本地链接地址
         str: image的文件名(不包含后缀)
-        str: image的类型 {'jpg', 'jpge', 'gif', 'png'} .
+        str: image的类型 {'jpg', 'jpeg', 'gif', 'png'} .
     """
     try:
         assert isinstance(image_tag, bs4.element.Tag)
@@ -143,7 +144,26 @@ def _replace_image(image_url, image_tag, ebook_folder,
         image_tag.decompose()
 
 
-class Chapter():
+def _validate_input_types(content, title):
+    try:
+        assert isinstance(content, str)
+    except AssertionError:
+        raise TypeError('content must be a string')
+    try:
+        assert isinstance(title, str)
+    except AssertionError:
+        raise TypeError('title must be a string')
+    try:
+        assert title != ''
+    except AssertionError:
+        raise ValueError('title cannot be empty string')
+    try:
+        assert content != ''
+    except AssertionError:
+        raise ValueError('content cannot be empty string')
+
+
+class Chapter:
     """
     chapter对象类. 不能直接调用, 应该用 ChapterFactor() 去实例化chapter.
 
@@ -160,13 +180,13 @@ class Chapter():
     """
 
     def __init__(self, content, title, url=None):
-        self._validate_input_types(content, title)
+        _validate_input_types(content, title)
         self.title = title
         self.content = content
         self._content_tree = BeautifulSoup(self.content, 'html.parser')
         self.url = url
         self.html_title = html.escape(self.title, quote=True)
-        self.imgs = []
+        self.img_list = []
 
     def write(self, file_name):
         """
@@ -181,24 +201,6 @@ class Chapter():
             raise ValueError('filename must end with .xhtml')
         with open(file_name, 'w', encoding='utf-8') as f:
             f.write(self.content)
-
-    def _validate_input_types(self, content, title):
-        try:
-            assert isinstance(content, str)
-        except AssertionError:
-            raise TypeError('content must be a string')
-        try:
-            assert isinstance(title, str)
-        except AssertionError:
-            raise TypeError('title must be a string')
-        try:
-            assert title != ''
-        except AssertionError:
-            raise ValueError('title cannot be empty string')
-        try:
-            assert content != ''
-        except AssertionError:
-            raise ValueError('content cannot be empty string')
 
     def get_url(self):
         if self.url is not None:
@@ -219,16 +221,15 @@ class Chapter():
     def _replace_images_in_chapter(self, ebook_folder):
         image_url_list = self._get_image_urls()
         for image_tag, image_url in image_url_list:
-            imgInfo = _replace_image(
+            img_info = _replace_image(
                 image_url, image_tag, ebook_folder)
-            if imgInfo != None:
-                img_link, img_id, img_type = imgInfo
+            if img_info is not None:
+                img_link, img_id, img_type = img_info
                 img = {'link': img_link, 'id': img_id, 'type': img_type}
-                self.imgs.append(img)
-        unformatted_html_unicode_string = self._content_tree.prettify()
-        unformatted_html_unicode_string = unformatted_html_unicode_string.replace(
-            '<br>', '<br/>')
-        self.content = unformatted_html_unicode_string
+                self.img_list.append(img)
+        unformat_html_unicode_string = self._content_tree.prettify()
+        unformat_html_unicode_string = unformat_html_unicode_string.replace('<br>', '<br/>')
+        self.content = unformat_html_unicode_string
 
 
 class ChapterFactory:
@@ -247,7 +248,7 @@ class ChapterFactory:
     def create_chapter_from_url(self, url, title=None):
         """
         从URL创建chapter对象. 
-        从给定的url中提取网页, 使用clean_function方法对其进行清理, 并将其另存为创建的chpter的内容.
+        从给定的url中提取网页, 使用clean_function方法对其进行清理, 并将其另存为创建的chapter的内容.
         在执行任何javascript之前加载的基本网页.
 
         Parameters:

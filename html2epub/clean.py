@@ -19,7 +19,7 @@ def create_html_from_fragment(tag):
     Parameters:
         tag: a bs4.element.Tag
 
-    Returns:"
+    Returns:
         bs4.element.Tag: A bs4 tag representing a full html document
     """
 

@@ -10,6 +10,7 @@ import string
 import time
 import tempfile
 import imp
+
 try:
     imp.find_module('lxml')
     lxml_module_exists = True
@@ -51,7 +52,7 @@ class _ContainerFile():
                     os.path.join(parent_directory, 'container.xml'))
 
 
-class _EpubFile():
+class _EpubFile:
     """
     用于将chapters写入Epub的类
     """
@@ -70,8 +71,9 @@ class _EpubFile():
     def _render_template(self, **variable_value_pairs):
         def read_template():
             with open(self.template_file, 'r', encoding="utf-8") as f:
-                template = f.read()
-            return jinja2.Template(template)
+                cur_template = f.read()
+            return jinja2.Template(cur_template)
+
         template = read_template()
         rendered_template = template.render(variable_value_pairs)
         self.content = rendered_template
@@ -85,6 +87,7 @@ class _EpubFile():
                     list_length = len(value)
                 else:
                     assert len(value) == list_length
+
         check_list_lengths(parameter_lists)
         template_chapter = collections.namedtuple('template_chapter',
                                                   parameter_lists.keys())
@@ -107,13 +110,13 @@ class TocHtml(_EpubFile):
     def add_chapters(self, chapter_list):
         chapter_numbers = range(len(chapter_list))
         link_list = [str(n) + '.xhtml' for n in chapter_numbers]
+        t = chapter.Chapter
         try:
             for c in chapter_list:
                 t = type(c)
                 assert type(c) == chapter.Chapter
         except AssertionError:
-            raise TypeError('chapter_list items must be Chapter not %s',
-                            str(t))
+            raise TypeError('chapter_list items must be Chapter not %s', str(t))
         chapter_titles = [c.title for c in chapter_list]
         super(TocHtml, self).add_chapters(title=chapter_titles,
                                           link=link_list)
@@ -174,9 +177,9 @@ class ContentOpf(_EpubFile):
     def add_chapters(self, chapter_list):
         id_list = range(len(chapter_list))
         link_list = [str(n) + '.xhtml' for n in id_list]
-        imgs_list = [c.imgs for c in chapter_list]
+        img_list = [c.img_list for c in chapter_list]
         super(ContentOpf, self).add_chapters(
-            **{'id': id_list, 'link': link_list, "imgs": imgs_list})
+            **{'id': id_list, 'link': link_list, "imgs": img_list})
 
     def get_content_as_element(self):
         if lxml_module_exists:
@@ -245,11 +248,10 @@ class Epub():
 
         if self.current_chapter_number is None:
             self.current_chapter_number = 0
-        else:
-            self.current_chapter_number += 1
+
+        self.current_chapter_number += 1
         self.current_chapter_id = str(self.current_chapter_number)
-        self.current_chapter_path = ''.join(
-            [self.current_chapter_id, '.xhtml'])
+        self.current_chapter_path = ''.join([self.current_chapter_id, '.xhtml'])
 
     def add_chapter(self, c):
         """
@@ -264,8 +266,7 @@ class Epub():
             assert type(c) == chapter.Chapter
         except AssertionError:
             raise TypeError('chapter must be of type Chapter')
-        chapter_file_output = os.path.join(
-            self.OEBPS_DIR, self.current_chapter_path)
+        chapter_file_output = os.path.join(self.OEBPS_DIR, self.current_chapter_path)
         c._replace_images_in_chapter(self.OEBPS_DIR)
         c.write(chapter_file_output)
         self._increase_current_chapter_number()
@@ -280,6 +281,7 @@ class Epub():
             epub_name (Option[str]): The file name of your epub. This should not contain
                 .epub at the end. If this argument is not provided, defaults to the title of the epub.
         """
+
         def createTOCs_and_ContentOPF():
             """
             创建目录和opf文件等.
@@ -315,6 +317,7 @@ class Epub():
                 pass
             os.rename(zip_archive, epub_full_name)
             return epub_full_name
+
         createTOCs_and_ContentOPF()
         epub_path = turn_zip_into_epub(create_zip_archive(epub_name))
         return epub_path
